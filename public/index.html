@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>이력현황 표 변환기</title>
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <h1>점검진단실적 → 이력현황 표 변환기</h1>
+    <p class="sub">시설물 점검·진단 실적 엑셀을 보고서용 "이력현황" 표(Word / Excel)로 변환합니다.</p>
+
+    <form id="convertForm">
+      <label class="field">
+        <span>시설물 종류(표 양식)</span>
+        <select name="format" id="format">
+          <option value="slope">절토사면형 — No/점검종류/점검기간/점검기관/평가등급/점검결과</option>
+          <option value="wall">옹벽형 — No/수행기간·구분/점검기관·기술자/안전등급/점검결과/보수보강안</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>표 제목 (선택)</span>
+        <input type="text" name="title" id="title" placeholder="점검진단실적" />
+      </label>
+
+      <label class="field dropzone" id="dropzone">
+        <span>원본 엑셀 파일 (.xlsx)</span>
+        <input type="file" name="file" id="fileInput" accept=".xlsx" required />
+        <span id="fileName" class="filename">파일을 선택하거나 여기로 드래그하세요</span>
+      </label>
+
+      <button type="submit" id="submitBtn">변환하기</button>
+    </form>
+
+    <div id="status" class="status" hidden></div>
+
+    <div id="result" class="result" hidden>
+      <h2>변환 완료</h2>
+      <p id="rowCountText"></p>
+      <div class="downloads">
+        <a id="docxLink" class="btn" download>Word(.docx) 다운로드</a>
+        <a id="xlsxLink" class="btn" download>Excel(.xlsx) 다운로드</a>
+      </div>
+      <h3>미리보기 (앞 5건)</h3>
+      <div id="previewTable"></div>
+    </div>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

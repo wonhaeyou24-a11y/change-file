@@ -1,0 +1,82 @@
+:root {
+  --accent: #c15f3c;
+  --ink: #23201d;
+  --sub: #6b645c;
+  --line: #ddd6cd;
+  --bg: #faf8f5;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+.wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 24px 96px;
+}
+h1 { font-size: 24px; margin-bottom: 6px; }
+.sub { color: var(--sub); margin-top: 0; margin-bottom: 32px; }
+
+form { display: flex; flex-direction: column; gap: 18px; }
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--sub); }
+.field select, .field input[type="text"] {
+  font-size: 15px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+}
+.dropzone {
+  border: 1.5px dashed var(--line);
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+  position: relative;
+  background: #fff;
+}
+.dropzone input[type="file"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.filename { display: block; margin-top: 8px; font-size: 14px; color: var(--ink); }
+
+button {
+  margin-top: 8px;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.status { margin-top: 20px; padding: 12px 14px; border-radius: 8px; font-size: 14px; }
+.status.info { background: #eef1fb; color: #33488a; }
+.status.error { background: #fbeceb; color: #a23b2f; }
+
+.result { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--line); }
+.downloads { display: flex; gap: 12px; margin: 14px 0 24px; }
+.btn {
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+}
+#previewTable table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#previewTable th, #previewTable td {
+  border: 1px solid var(--line);
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+  white-space: pre-wrap;
+}
+#previewTable th { background: #f1ece4; }
