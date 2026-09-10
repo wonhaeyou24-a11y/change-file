@@ -13,21 +13,65 @@
 
     <form id="convertForm">
       <label class="field">
-        <span>시설물 종류(표 양식)</span>
+        <span>표 양식</span>
         <select name="format" id="format">
           <option value="slope">절토사면형 — No/점검종류/점검기간/점검기관/평가등급/점검결과</option>
           <option value="wall">옹벽형 — No/수행기간·구분/점검기관·기술자/안전등급/점검결과/보수보강안</option>
+          <option value="weather">기상청 강수량 분석 — 연도/발생일/연별 최다 일강수량(3분할 + 누년 평균값)</option>
+          <option value="universal">만능 양식 모드 (AI) — 양식 파일을 올리면 그 양식대로 정리</option>
         </select>
       </label>
 
-      <label class="field">
-        <span>표 제목 (선택)</span>
-        <input type="text" name="title" id="title" placeholder="점검진단실적" />
-      </label>
+      <div id="fields-default">
+        <label class="field">
+          <span>표 제목 (선택)</span>
+          <input type="text" name="title" id="title" placeholder="점검진단실적" />
+        </label>
+      </div>
+
+      <div id="fields-weather" hidden>
+        <label class="field">
+          <span>지점 표시명 (비우면 파일의 지점명 사용)</span>
+          <input type="text" id="stationName" placeholder="예: 통영" />
+        </label>
+        <label class="field">
+          <span>표 번호</span>
+          <input type="text" id="tableNo" placeholder="6.2-5" />
+        </label>
+        <label class="field">
+          <span>표 제목(캡션)</span>
+          <input type="text" id="caption" placeholder="기상청 강수량 분석 결과" />
+        </label>
+      </div>
+
+      <div id="fields-universal" hidden>
+        <label class="field dropzone" id="tmplzone">
+          <span>양식 파일 — 빈 표 (.xlsx / .xls / .csv / 이미지 png·jpg / .pdf)</span>
+          <input type="file" id="templateInput" accept=".xlsx,.xlsm,.xls,.csv,.png,.jpg,.jpeg,.webp,.pdf" />
+          <span id="templateName" class="filename">양식 파일을 선택하세요</span>
+        </label>
+        <label class="field">
+          <span>Claude API 키 (sk-...)</span>
+          <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off" spellcheck="false" />
+          <small class="hint">키는 이번 변환에만 쓰이고 서버·브라우저 어디에도 저장되지 않습니다. 배포 코드에도 포함되지 않습니다.</small>
+        </label>
+        <label class="field">
+          <span>AI 모델</span>
+          <select id="model">
+            <option value="claude-opus-5">Claude Opus 5 — 가장 정확 (권장)</option>
+            <option value="claude-sonnet-5">Claude Sonnet 5 — 빠르고 저렴</option>
+            <option value="claude-haiku-4-5">Claude Haiku 4.5 — 가장 저렴</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>추가 지시사항 (선택)</span>
+          <input type="text" id="instructions" placeholder="예: 발생일은 yyyy.mm.dd 로, 평균은 소수 2자리" />
+        </label>
+      </div>
 
       <label class="field dropzone" id="dropzone">
-        <span>원본 엑셀 파일 (.xlsx)</span>
-        <input type="file" name="file" id="fileInput" accept=".xlsx" required />
+        <span id="dropLabel">원본 엑셀 파일 (.xlsx)</span>
+        <input type="file" name="file" id="fileInput" accept=".xlsx,.xls,.csv,.txt" required />
         <span id="fileName" class="filename">파일을 선택하거나 여기로 드래그하세요</span>
       </label>
 
@@ -43,7 +87,8 @@
         <a id="docxLink" class="btn" download>Word(.docx) 다운로드</a>
         <a id="xlsxLink" class="btn" download>Excel(.xlsx) 다운로드</a>
       </div>
-      <h3>미리보기 (앞 5건)</h3>
+      <p id="aiNotes" class="hint" hidden></p>
+      <h3>미리보기</h3>
       <div id="previewTable"></div>
     </div>
   </main>
