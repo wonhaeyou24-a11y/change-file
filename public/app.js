@@ -16,8 +16,7 @@ const dropLabel = document.getElementById("dropLabel");
 const templateInput = document.getElementById("templateInput");
 const templateName = document.getElementById("templateName");
 const providerSel = document.getElementById("provider");
-const modelInput = document.getElementById("model");
-const modelList = document.getElementById("modelList");
+const modelSel = document.getElementById("model");
 const loadModelsBtn = document.getElementById("loadModels");
 const apiKeyInput = document.getElementById("apiKey");
 const keyLabel = document.getElementById("keyLabel");
@@ -53,18 +52,38 @@ function populateProviders() {
   providerSel.value = "gemini";
   syncProvider();
 }
-function fillModelList(models) {
-  modelList.innerHTML = "";
+const CUSTOM = "__custom__";
+function fillModelList(models, keep) {
+  modelSel.innerHTML = "";
   for (const m of models) {
     const o = document.createElement("option");
-    o.value = m;
-    modelList.appendChild(o);
+    o.value = m; o.textContent = m;
+    modelSel.appendChild(o);
   }
+  const c = document.createElement("option");
+  c.value = CUSTOM; c.textContent = "✎ 직접 입력…";
+  modelSel.appendChild(c);
+  if (keep && models.includes(keep)) modelSel.value = keep;
+  else if (models.length) modelSel.value = models[0];
 }
+modelSel.addEventListener("change", () => {
+  if (modelSel.value !== CUSTOM) { modelSel.dataset.prev = modelSel.value; return; }
+  const m = (prompt("사용할 모델 ID를 입력하세요 (예: gemini-3.5-flash)", "") || "").trim();
+  if (m) {
+    if (![...modelSel.options].some(o => o.value === m)) {
+      const o = document.createElement("option");
+      o.value = m; o.textContent = m;
+      modelSel.insertBefore(o, modelSel.lastChild);
+    }
+    modelSel.value = m;
+    modelSel.dataset.prev = m;
+  } else {
+    modelSel.value = modelSel.dataset.prev || (modelSel.options[0] && modelSel.options[0].value) || "";
+  }
+});
 function syncProvider() {
   const p = PROVIDERS[providerSel.value] || FALLBACK_PROVIDERS.gemini;
-  fillModelList(p.models);
-  modelInput.value = p.default;
+  fillModelList(p.models, p.default);
   keyLabel.textContent = p.label;
   keyGetHint.textContent = KEY_HINTS[providerSel.value] || "";
   templateInput.setAttribute(
@@ -89,9 +108,9 @@ loadModelsBtn.addEventListener("click", async () => {
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || "실패");
     if (!d.models.length) throw new Error("사용 가능한 모델이 없습니다.");
-    fillModelList(d.models);
-    if (!d.models.includes(modelInput.value)) modelInput.value = d.models[0];
-    showStatus(`모델 ${d.models.length}개를 불러왔습니다. 입력칸을 클릭하면 목록이 보입니다.`, "info");
+    const keep = modelSel.value !== CUSTOM ? modelSel.value : "";
+    fillModelList(d.models, keep);
+    showStatus(`모델 ${d.models.length}개를 불러왔습니다. 아래 목록에서 선택하세요.`, "info");
   } catch (e) {
     showStatus("모델 불러오기 실패: " + e.message, "error");
   } finally {
@@ -216,9 +235,11 @@ form.addEventListener("submit", async (e) => {
     const key = document.getElementById("apiKey").value.trim();
     if (!tmpl) { showStatus("양식 파일을 선택해주세요.", "error"); return; }
     if (!key) { showStatus(`${keyLabel.textContent} API 키를 입력해주세요.`, "error"); return; }
+    const model = modelSel.value === CUSTOM ? "" : modelSel.value;
+    if (!model) { showStatus("AI 모델을 선택하거나 직접 입력해주세요.", "error"); return; }
     fd.append("template", tmpl);
     fd.append("provider", providerSel.value);
-    fd.append("model", modelInput.value.trim());
+    fd.append("model", model);
     fd.append("apiKey", key);
     const ins = document.getElementById("instructions").value.trim();
     if (ins) fd.append("instructions", ins);

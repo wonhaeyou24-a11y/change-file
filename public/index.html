@@ -25,9 +25,9 @@
         <label class="field">
           <span>양식 선택</span>
           <select id="basicFormat">
-            <option value="slope">절토사면형 — No/점검종류/점검기간/점검기관/평가등급/점검결과</option>
-            <option value="wall">옹벽형 — No/수행기간·구분/점검기관·기술자/안전등급/점검결과/보수보강안</option>
-            <option value="weather">강우량 — 기상청 강수량 분석 (연도/발생일/최다 일강수량 3분할 + 누년 평균값)</option>
+            <option value="slope">절토사면</option>
+            <option value="wall">옹벽</option>
+            <option value="weather">강우량</option>
           </select>
         </label>
 
@@ -73,9 +73,8 @@
         </label>
         <label class="field">
           <span>AI 모델 <button type="button" id="loadModels" class="mini">이 키로 쓸 수 있는 모델 불러오기</button></span>
-          <input id="model" list="modelList" placeholder="예: gemini-flash-latest" autocomplete="off" spellcheck="false" />
-          <datalist id="modelList"></datalist>
-          <small class="hint">모델명을 직접 입력해도 됩니다. 목록은 안내용이라 최신이 아닐 수 있으니, 키 입력 후 "불러오기"로 실제 사용 가능한 모델을 확인하세요.</small>
+          <select id="model"></select>
+          <small class="hint">키 입력 후 "불러오기"를 누르면 실제 사용 가능한 모델이 목록에 채워집니다. 맨 아래 "직접 입력"으로 모델 ID를 직접 넣을 수도 있습니다.</small>
         </label>
         <label class="field">
           <span>추가 지시사항 (선택)</span>
