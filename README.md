@@ -19,9 +19,10 @@
 **양식 파일(빈 표)** 을 올리면 AI가 그 양식을 분석해 자료를 채운다.
 
 - **AI 제공자**: **Google Gemini(기본)** / Anthropic Claude / OpenAI 중 선택
-  - Gemini: `gemini-2.5-flash`(기본) · `gemini-2.5-pro` · `gemini-2.0-flash`
-  - Claude: `claude-sonnet-5`(기본) · `claude-opus-5` · `claude-haiku-4-5`
-  - OpenAI: `gpt-4o`(기본) · `gpt-4o-mini`
+- **모델**: 직접 입력 가능(자유 텍스트). 화면의 "이 키로 쓸 수 있는 모델 불러오기" 버튼을
+  누르면 입력한 키로 실제 사용 가능한 최신 모델 목록을 조회한다 (`POST /api/ai-models`).
+  기본값 — Gemini `gemini-flash-latest`, Claude `claude-sonnet-5`, OpenAI `gpt-4o`.
+  (추천 목록은 안내용이라 최신이 아닐 수 있음 — Gemini는 3.x대로 넘어갔고 앱 이름과 API ID가 다름)
 - **API 키**: 선택한 제공자의 키를 화면에 입력. 그 키는 해당 요청 처리 중 **메모리에서만**
   쓰이고 **로그·디스크·환경변수·배포 코드 어디에도 저장하지 않는다**.
 - **양식 파일**: `.xlsx` / `.xls` / `.csv` / 표 **이미지**(png·jpg) / **PDF**

@@ -11,7 +11,7 @@ const { extractWeather } = require("./lib/weatherExtract");
 const { buildWeatherDocx, buildWeatherXlsx, buildLayout } = require("./lib/renderWeather");
 const { extractData, matrixToTSV } = require("./lib/dataExtract");
 const { analyzeTemplate } = require("./lib/templateAnalyze");
-const { aiBuildTable, PROVIDERS } = require("./lib/aiTable");
+const { aiBuildTable, listModels, PROVIDERS } = require("./lib/aiTable");
 const { gridToXlsx, gridToDocx } = require("./lib/renderGrid");
 
 const app = express();
@@ -151,6 +151,18 @@ app.post("/api/convert-universal", uploadUniversal, async (req, res) => {
     // 키가 로그에 남지 않도록 message 만 출력
     console.error("[universal]", err.message);
     res.status(err.userFacing ? 400 : 500).json({ error: err.message || "변환 중 오류가 발생했습니다." });
+  }
+});
+
+// 사용자가 입력한 키로 해당 제공자의 모델 목록 조회 (키는 미저장, 로그 미기록)
+app.post("/api/ai-models", express.json(), async (req, res) => {
+  try {
+    const provider = req.body.provider || "gemini";
+    const models = await listModels(provider, req.body.apiKey || "");
+    res.json({ ok: true, models });
+  } catch (err) {
+    console.error("[ai-models]", err.message);
+    res.status(err.userFacing ? 400 : 500).json({ error: err.message || "모델 목록 조회 실패" });
   }
 });
 

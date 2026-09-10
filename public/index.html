@@ -66,14 +66,16 @@
           <select id="provider"></select>
         </label>
         <label class="field">
-          <span>AI 모델</span>
-          <select id="model"></select>
-        </label>
-        <label class="field">
           <span><span id="keyLabel">Gemini</span> API 키</span>
           <input type="password" id="apiKey" placeholder="API 키" autocomplete="off" spellcheck="false" />
           <small class="hint">키는 이번 변환에만 쓰이고 서버·브라우저 어디에도 저장되지 않습니다. 배포 코드에도 포함되지 않습니다.</small>
           <small class="hint" id="keyGetHint"></small>
+        </label>
+        <label class="field">
+          <span>AI 모델 <button type="button" id="loadModels" class="mini">이 키로 쓸 수 있는 모델 불러오기</button></span>
+          <input id="model" list="modelList" placeholder="예: gemini-flash-latest" autocomplete="off" spellcheck="false" />
+          <datalist id="modelList"></datalist>
+          <small class="hint">모델명을 직접 입력해도 됩니다. 목록은 안내용이라 최신이 아닐 수 있으니, 키 입력 후 "불러오기"로 실제 사용 가능한 모델을 확인하세요.</small>
         </label>
         <label class="field">
           <span>추가 지시사항 (선택)</span>

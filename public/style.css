@@ -85,4 +85,10 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .hint { display: block; margin-top: 6px; font-size: 12px; color: var(--sub); line-height: 1.5; word-break: break-all; }
 #mode-basic, #mode-universal, #basic-weather { display: flex; flex-direction: column; gap: 18px; }
-#apiKey { font-family: ui-monospace, Menlo, Consolas, monospace; }
+#apiKey, #model { font-family: ui-monospace, Menlo, Consolas, monospace; }
+button.mini {
+  margin: 0 0 0 8px; padding: 3px 10px; font-size: 12px; font-weight: 500;
+  background: #fff; color: var(--accent); border: 1px solid var(--line); border-radius: 6px;
+  vertical-align: middle;
+}
+button.mini:disabled { opacity: .5; }

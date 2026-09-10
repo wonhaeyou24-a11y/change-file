@@ -16,7 +16,10 @@ const dropLabel = document.getElementById("dropLabel");
 const templateInput = document.getElementById("templateInput");
 const templateName = document.getElementById("templateName");
 const providerSel = document.getElementById("provider");
-const modelSel = document.getElementById("model");
+const modelInput = document.getElementById("model");
+const modelList = document.getElementById("modelList");
+const loadModelsBtn = document.getElementById("loadModels");
+const apiKeyInput = document.getElementById("apiKey");
 const keyLabel = document.getElementById("keyLabel");
 const keyGetHint = document.getElementById("keyGetHint");
 
@@ -26,9 +29,9 @@ const KEY_HINTS = {
   openai: "키 발급: https://platform.openai.com/api-keys",
 };
 const FALLBACK_PROVIDERS = {
-  gemini: { label: "Google Gemini", default: "gemini-2.5-flash", models: ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"], supportsPdf: true },
+  gemini: { label: "Google Gemini", default: "gemini-flash-latest", models: ["gemini-flash-latest", "gemini-3.5-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-2.5-pro"], supportsPdf: true },
   claude: { label: "Anthropic Claude", default: "claude-sonnet-5", models: ["claude-sonnet-5", "claude-opus-5", "claude-haiku-4-5"], supportsPdf: true },
-  openai: { label: "OpenAI", default: "gpt-4o", models: ["gpt-4o", "gpt-4o-mini"], supportsPdf: false },
+  openai: { label: "OpenAI", default: "gpt-4o", models: ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini"], supportsPdf: false },
 };
 let PROVIDERS = FALLBACK_PROVIDERS;
 
@@ -50,15 +53,18 @@ function populateProviders() {
   providerSel.value = "gemini";
   syncProvider();
 }
+function fillModelList(models) {
+  modelList.innerHTML = "";
+  for (const m of models) {
+    const o = document.createElement("option");
+    o.value = m;
+    modelList.appendChild(o);
+  }
+}
 function syncProvider() {
   const p = PROVIDERS[providerSel.value] || FALLBACK_PROVIDERS.gemini;
-  modelSel.innerHTML = "";
-  for (const m of p.models) {
-    const o = document.createElement("option");
-    o.value = m; o.textContent = m;
-    modelSel.appendChild(o);
-  }
-  modelSel.value = p.default;
+  fillModelList(p.models);
+  modelInput.value = p.default;
   keyLabel.textContent = p.label;
   keyGetHint.textContent = KEY_HINTS[providerSel.value] || "";
   templateInput.setAttribute(
@@ -67,6 +73,32 @@ function syncProvider() {
   );
 }
 providerSel.addEventListener("change", syncProvider);
+
+loadModelsBtn.addEventListener("click", async () => {
+  const key = apiKeyInput.value.trim();
+  if (!key) { showStatus(`${keyLabel.textContent} API 키를 먼저 입력해주세요.`, "error"); return; }
+  loadModelsBtn.disabled = true;
+  const orig = loadModelsBtn.textContent;
+  loadModelsBtn.textContent = "불러오는 중...";
+  try {
+    const r = await fetch("/api/ai-models", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ provider: providerSel.value, apiKey: key }),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || "실패");
+    if (!d.models.length) throw new Error("사용 가능한 모델이 없습니다.");
+    fillModelList(d.models);
+    if (!d.models.includes(modelInput.value)) modelInput.value = d.models[0];
+    showStatus(`모델 ${d.models.length}개를 불러왔습니다. 입력칸을 클릭하면 목록이 보입니다.`, "info");
+  } catch (e) {
+    showStatus("모델 불러오기 실패: " + e.message, "error");
+  } finally {
+    loadModelsBtn.disabled = false;
+    loadModelsBtn.textContent = orig;
+  }
+});
 
 async function loadProviders() {
   try {
@@ -186,7 +218,7 @@ form.addEventListener("submit", async (e) => {
     if (!key) { showStatus(`${keyLabel.textContent} API 키를 입력해주세요.`, "error"); return; }
     fd.append("template", tmpl);
     fd.append("provider", providerSel.value);
-    fd.append("model", modelSel.value);
+    fd.append("model", modelInput.value.trim());
     fd.append("apiKey", key);
     const ins = document.getElementById("instructions").value.trim();
     if (ins) fd.append("instructions", ins);
