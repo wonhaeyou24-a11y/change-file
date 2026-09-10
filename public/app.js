@@ -247,10 +247,8 @@ form.addEventListener("submit", async (e) => {
     fd.append("format", basicFormat);
     if (basicFormat === "weather") {
       const sn = document.getElementById("stationName").value.trim();
-      const tn = document.getElementById("tableNo").value.trim();
       const cap = document.getElementById("caption").value.trim();
       if (sn) fd.append("stationName", sn);
-      if (tn) fd.append("tableNo", tn);
       if (cap) fd.append("caption", cap);
     } else {
       const title = document.getElementById("title").value;

@@ -39,7 +39,7 @@ app.post("/api/convert", upload.single("file"), async (req, res) => {
       }
       const opts = {
         name: req.body.stationName || data.name || "",
-        tableNo: req.body.tableNo || "6.2-5",
+        tableNo: req.body.tableNo || "",
         caption: req.body.caption || "기상청 강수량 분석 결과",
         sectionHeading: req.body.sectionHeading || "",
       };
