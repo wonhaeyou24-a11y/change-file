@@ -11,7 +11,7 @@ const { extractWeather } = require("./lib/weatherExtract");
 const { buildWeatherDocx, buildWeatherXlsx, buildLayout } = require("./lib/renderWeather");
 const { extractData, matrixToTSV } = require("./lib/dataExtract");
 const { analyzeTemplate } = require("./lib/templateAnalyze");
-const { aiBuildTable } = require("./lib/aiTable");
+const { aiBuildTable, PROVIDERS } = require("./lib/aiTable");
 const { gridToXlsx, gridToDocx } = require("./lib/renderGrid");
 
 const app = express();
@@ -110,8 +110,9 @@ app.post("/api/convert-universal", uploadUniversal, async (req, res) => {
     if (!dataFile) return res.status(400).json({ error: "자료 파일이 없습니다." });
     if (!tmplFile) return res.status(400).json({ error: "양식 파일이 없습니다." });
 
+    const provider = req.body.provider || "gemini";
     const apiKey = req.body.apiKey || "";
-    const model = req.body.model || "claude-opus-5";
+    const model = req.body.model || "";
     const instructions = req.body.instructions || "";
     const sectionHeading = req.body.sectionHeading || "";
 
@@ -121,7 +122,8 @@ app.post("/api/convert-universal", uploadUniversal, async (req, res) => {
 
     const template = await analyzeTemplate(tmplFile.buffer, tmplFile.originalname);
 
-    const { grid, model: usedModel } = await aiBuildTable({ apiKey, model, template, dataTSV, instructions });
+    const { grid, provider: usedProvider, model: usedModel } =
+      await aiBuildTable({ provider, apiKey, model, template, dataTSV, instructions });
 
     const [xlsxBuf, docxBuf] = await Promise.all([
       gridToXlsx(grid),
@@ -132,6 +134,7 @@ app.post("/api/convert-universal", uploadUniversal, async (req, res) => {
     res.json({
       ok: true,
       format: "universal",
+      provider: usedProvider,
       model: usedModel,
       dataKind: kind,
       grid,
@@ -149,6 +152,14 @@ app.post("/api/convert-universal", uploadUniversal, async (req, res) => {
     console.error("[universal]", err.message);
     res.status(err.userFacing ? 400 : 500).json({ error: err.message || "변환 중 오류가 발생했습니다." });
   }
+});
+
+app.get("/api/providers", (_req, res) => {
+  const out = {};
+  for (const [k, v] of Object.entries(PROVIDERS)) {
+    out[k] = { label: v.label, default: v.default, models: v.models, supportsPdf: v.supportsPdf };
+  }
+  res.json(out);
 });
 
 const PORT = process.env.PORT || 3000;

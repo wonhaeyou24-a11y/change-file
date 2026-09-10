@@ -5,52 +5,114 @@ const statusEl = document.getElementById("status");
 const resultEl = document.getElementById("result");
 const submitBtn = document.getElementById("submitBtn");
 
+const modeSel = document.getElementById("mode");
+const modeBasic = document.getElementById("mode-basic");
+const modeUniversal = document.getElementById("mode-universal");
+const basicFormatSel = document.getElementById("basicFormat");
+const basicDefault = document.getElementById("basic-default");
+const basicWeather = document.getElementById("basic-weather");
+const dropLabel = document.getElementById("dropLabel");
+
+const templateInput = document.getElementById("templateInput");
+const templateName = document.getElementById("templateName");
+const providerSel = document.getElementById("provider");
+const modelSel = document.getElementById("model");
+const keyLabel = document.getElementById("keyLabel");
+const keyGetHint = document.getElementById("keyGetHint");
+
+const KEY_HINTS = {
+  gemini: "키 발급: https://aistudio.google.com/apikey",
+  claude: "키 발급: https://console.anthropic.com/settings/keys",
+  openai: "키 발급: https://platform.openai.com/api-keys",
+};
+const FALLBACK_PROVIDERS = {
+  gemini: { label: "Google Gemini", default: "gemini-2.5-flash", models: ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"], supportsPdf: true },
+  claude: { label: "Anthropic Claude", default: "claude-sonnet-5", models: ["claude-sonnet-5", "claude-opus-5", "claude-haiku-4-5"], supportsPdf: true },
+  openai: { label: "OpenAI", default: "gpt-4o", models: ["gpt-4o", "gpt-4o-mini"], supportsPdf: false },
+};
+let PROVIDERS = FALLBACK_PROVIDERS;
+
 fileInput.addEventListener("change", () => {
   fileName.textContent = fileInput.files[0] ? fileInput.files[0].name : "파일을 선택하거나 여기로 드래그하세요";
 });
-
-const formatSel = document.getElementById("format");
-const fieldsDefault = document.getElementById("fields-default");
-const fieldsWeather = document.getElementById("fields-weather");
-const fieldsUniversal = document.getElementById("fields-universal");
-const dropLabel = document.getElementById("dropLabel");
-const templateInput = document.getElementById("templateInput");
-const templateName = document.getElementById("templateName");
-
 templateInput.addEventListener("change", () => {
   templateName.textContent = templateInput.files[0] ? templateInput.files[0].name : "양식 파일을 선택하세요";
 });
 
-function syncFormatUI() {
-  const f = formatSel.value;
-  fieldsWeather.hidden = f !== "weather";
-  fieldsUniversal.hidden = f !== "universal";
-  fieldsDefault.hidden = f === "weather" || f === "universal";
+function populateProviders() {
+  providerSel.innerHTML = "";
+  for (const [k, v] of Object.entries(PROVIDERS)) {
+    const o = document.createElement("option");
+    o.value = k;
+    o.textContent = v.label + (k === "gemini" ? " (기본)" : "");
+    providerSel.appendChild(o);
+  }
+  providerSel.value = "gemini";
+  syncProvider();
+}
+function syncProvider() {
+  const p = PROVIDERS[providerSel.value] || FALLBACK_PROVIDERS.gemini;
+  modelSel.innerHTML = "";
+  for (const m of p.models) {
+    const o = document.createElement("option");
+    o.value = m; o.textContent = m;
+    modelSel.appendChild(o);
+  }
+  modelSel.value = p.default;
+  keyLabel.textContent = p.label;
+  keyGetHint.textContent = KEY_HINTS[providerSel.value] || "";
+  templateInput.setAttribute(
+    "accept",
+    p.supportsPdf ? ".xlsx,.xlsm,.xls,.csv,.png,.jpg,.jpeg,.webp,.pdf" : ".xlsx,.xlsm,.xls,.csv,.png,.jpg,.jpeg,.webp"
+  );
+}
+providerSel.addEventListener("change", syncProvider);
+
+async function loadProviders() {
+  try {
+    const r = await fetch("/api/providers");
+    if (r.ok) PROVIDERS = await r.json();
+  } catch (_) { /* keep fallback */ }
+  populateProviders();
+}
+loadProviders();
+
+function syncMode() {
+  const universal = modeSel.value === "universal";
+  modeUniversal.hidden = !universal;
+  modeBasic.hidden = universal;
+  if (universal) {
+    dropLabel.textContent = "정리할 자료 파일 (.xlsx / .xls / .csv / .hwpx)";
+    fileInput.setAttribute("accept", ".xlsx,.xlsm,.xls,.csv,.txt,.tsv,.hwpx,.hwp");
+  } else {
+    syncBasicFormat();
+  }
+}
+function syncBasicFormat() {
+  const f = basicFormatSel.value;
+  basicWeather.hidden = f !== "weather";
+  basicDefault.hidden = f === "weather";
   if (f === "weather") {
     dropLabel.textContent = "기상청 '일 최다 강수량' 자료 (.xls / .csv / .xlsx)";
     fileInput.setAttribute("accept", ".xlsx,.xls,.csv,.txt");
-  } else if (f === "universal") {
-    dropLabel.textContent = "정리할 자료 파일 (.xlsx / .xls / .csv / .hwpx)";
-    fileInput.setAttribute("accept", ".xlsx,.xlsm,.xls,.csv,.txt,.tsv,.hwpx,.hwp");
   } else {
     dropLabel.textContent = "원본 엑셀 파일 (.xlsx)";
     fileInput.setAttribute("accept", ".xlsx,.xls,.csv,.txt");
   }
 }
-formatSel.addEventListener("change", syncFormatUI);
-syncFormatUI();
+modeSel.addEventListener("change", syncMode);
+basicFormatSel.addEventListener("change", syncBasicFormat);
+syncMode();
 
 function showStatus(msg, type = "info") {
   statusEl.hidden = false;
   statusEl.textContent = msg;
   statusEl.className = `status ${type}`;
 }
-
 function base64ToBlobUrl(base64, mime) {
   const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
   return URL.createObjectURL(new Blob([bytes], { type: mime }));
 }
-
 const esc = s => (s ?? "").toString().replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
 function renderWeatherPreview(data) {
@@ -64,7 +126,6 @@ function renderWeatherPreview(data) {
   container.innerHTML = `<table>${head}${body}${foot}</table>`;
 }
 
-/** 범용 grid 모델({rows:[{cells:[{text,fill,bold,align,colspan,rowspan}]}]}) → HTML 표 */
 function renderGridPreview(grid) {
   const container = document.getElementById("previewTable");
   const rows = (grid.rows || []).map(r => {
@@ -88,7 +149,6 @@ function renderGridPreview(grid) {
 function renderPreview(rows, format) {
   const container = document.getElementById("previewTable");
   if (!rows || !rows.length) { container.innerHTML = ""; return; }
-
   let headers, cellsFor;
   if (format === "wall") {
     headers = ["No", "수행기간", "구분", "기관", "기술자", "등급", "점검결과", "보수보강안"];
@@ -99,7 +159,6 @@ function renderPreview(rows, format) {
     cellsFor = r => [r.no, r.type, `${r.start} ~ ${r.end}`, r.org, r.grade,
       (r.bullets || []).map(b => `-${b}`).join("\n")];
   }
-
   const thead = `<tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>`;
   const tbody = rows.map(r => `<tr>${cellsFor(r).map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("");
   container.innerHTML = `<table>${thead}${tbody}</table>`;
@@ -112,12 +171,11 @@ form.addEventListener("submit", async (e) => {
 
   const file = fileInput.files[0];
   if (!file) return;
-  const format = formatSel.value;
-  const universal = format === "universal";
+  const universal = modeSel.value === "universal";
+  const basicFormat = basicFormatSel.value;
 
   const fd = new FormData();
   fd.append("file", file);
-  fd.append("format", format);
 
   let endpoint = "/api/convert";
   if (universal) {
@@ -125,22 +183,26 @@ form.addEventListener("submit", async (e) => {
     const tmpl = templateInput.files[0];
     const key = document.getElementById("apiKey").value.trim();
     if (!tmpl) { showStatus("양식 파일을 선택해주세요.", "error"); return; }
-    if (!key) { showStatus("Claude API 키를 입력해주세요.", "error"); return; }
+    if (!key) { showStatus(`${keyLabel.textContent} API 키를 입력해주세요.`, "error"); return; }
     fd.append("template", tmpl);
+    fd.append("provider", providerSel.value);
+    fd.append("model", modelSel.value);
     fd.append("apiKey", key);
-    fd.append("model", document.getElementById("model").value);
     const ins = document.getElementById("instructions").value.trim();
     if (ins) fd.append("instructions", ins);
-  } else if (format === "weather") {
-    const sn = document.getElementById("stationName").value.trim();
-    const tn = document.getElementById("tableNo").value.trim();
-    const cap = document.getElementById("caption").value.trim();
-    if (sn) fd.append("stationName", sn);
-    if (tn) fd.append("tableNo", tn);
-    if (cap) fd.append("caption", cap);
   } else {
-    const title = document.getElementById("title").value;
-    if (title) fd.append("title", title);
+    fd.append("format", basicFormat);
+    if (basicFormat === "weather") {
+      const sn = document.getElementById("stationName").value.trim();
+      const tn = document.getElementById("tableNo").value.trim();
+      const cap = document.getElementById("caption").value.trim();
+      if (sn) fd.append("stationName", sn);
+      if (tn) fd.append("tableNo", tn);
+      if (cap) fd.append("caption", cap);
+    } else {
+      const title = document.getElementById("title").value;
+      if (title) fd.append("title", title);
+    }
   }
 
   submitBtn.disabled = true;
@@ -157,7 +219,7 @@ form.addEventListener("submit", async (e) => {
     const notesEl = document.getElementById("aiNotes");
     if (universal) {
       const c = data.computed || {};
-      const bits = [`모델: ${data.model}`];
+      const bits = [`${(PROVIDERS[data.provider] || {}).label || data.provider} · ${data.model}`];
       if (c.average != null) bits.push(`평균: ${c.average}`);
       if (c.count != null) bits.push(`개수: ${c.count}`);
       if (c.period) bits.push(`기간: ${c.period}`);
@@ -167,7 +229,7 @@ form.addEventListener("submit", async (e) => {
     } else {
       notesEl.hidden = true;
       document.getElementById("rowCountText").textContent =
-        format === "weather"
+        basicFormat === "weather"
           ? `${data.rowCount}개년 변환 완료 · 누년 평균값 ${data.summary.avg}mm`
           : `총 ${data.rowCount}건 변환 완료`;
     }
@@ -180,8 +242,8 @@ form.addEventListener("submit", async (e) => {
     xlsxLink.setAttribute("download", data.files.xlsx.name);
 
     if (universal) renderGridPreview(data.grid);
-    else if (format === "weather") renderWeatherPreview(data);
-    else renderPreview(data.preview, format);
+    else if (basicFormat === "weather") renderWeatherPreview(data);
+    else renderPreview(data.preview, basicFormat);
   } catch (err) {
     showStatus(err.message, "error");
   } finally {
